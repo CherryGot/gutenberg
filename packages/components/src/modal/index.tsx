@@ -20,7 +20,6 @@ import {
 	useInstanceId,
 	useFocusReturn,
 	useFocusOnMount,
-	__experimentalUseFocusOutside as useFocusOutside,
 	useConstrainedTabbing,
 	useMergeRefs,
 } from '@wordpress/compose';
@@ -90,7 +89,6 @@ function UnforwardedModal(
 	);
 	const constrainedTabbingRef = useConstrainedTabbing();
 	const focusReturnRef = useFocusReturn();
-	const focusOutsideProps = useFocusOutside( onRequestClose );
 	const contentRef = useRef< HTMLDivElement >( null );
 	const childrenContainerRef = useRef< HTMLDivElement >( null );
 
@@ -247,9 +245,6 @@ function UnforwardedModal(
 					aria-labelledby={ contentLabel ? undefined : headingId }
 					aria-describedby={ aria.describedby }
 					tabIndex={ -1 }
-					{ ...( shouldCloseOnClickOutside
-						? focusOutsideProps
-						: {} ) }
 					onKeyDown={ onKeyDown }
 				>
 					<div
