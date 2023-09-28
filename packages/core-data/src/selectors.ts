@@ -565,11 +565,13 @@ export const getEntityRecords = ( <
 		key: parsedKey,
 		isRevision,
 	} = parseEntityName( name );
+
 	if ( isRevision ) {
 		const queriedStateRevisions =
 			state.entities.records?.[ kind ]?.[ parsedName ]?.revisions[
 				parsedKey
 			];
+
 		if ( ! queriedStateRevisions ) {
 			return null;
 		}

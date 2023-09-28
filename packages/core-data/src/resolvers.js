@@ -148,33 +148,16 @@ export const getEntityRecord =
 					};
 				}
 
-				// Disable reason: While true that an early return could leave `path`
-				// unused, it's important that path is derived using the query prior to
-				// additional query modifications in the condition below, since those
-				// modifications are relevant to how the data is tracked in state, and not
-				// for how the request is made to the REST API.
+				const baseUrl = isRevision
+					? entityConfig.getRevisionsUrl( parsedKey, key )
+					: entityConfig.baseURL + ( key ? '/' + key : '' );
 
-				// @TODO this is a mess.
-				// @TODO Create predictable URL building rules for names like post:[key]:revisions.
-				// @TODO Possibly `entityConfig.getRevisionsUrl( { name } )?
-				let path;
-				if ( isRevision ) {
-					path = addQueryArgs(
-						entityConfig.getRevisionsUrl( parsedKey, key ),
-						{
-							...entityConfig.revisionURLParams,
-							...query,
-						}
-					);
-				} else {
-					path = addQueryArgs(
-						entityConfig.baseURL + ( key ? '/' + key : '' ),
-						{
-							...entityConfig.baseURLParams,
-							...query,
-						}
-					);
-				}
+				const path = addQueryArgs( baseUrl, {
+					...( isRevision
+						? entityConfig.revisionURLParams
+						: entityConfig.baseURLParams ),
+					...query,
+				} );
 
 				if ( query !== undefined ) {
 					query = { ...query, include: [ key ] };
@@ -196,18 +179,7 @@ export const getEntityRecord =
 				}
 
 				const record = await apiFetch( { path } );
-				// @TODO just dispatching here to send the action type.
-				if ( isRevision ) {
-					dispatch( {
-						type: 'RECEIVE_ITEM_REVISIONS',
-						kind,
-						name,
-						items: [ record ],
-						query,
-					} );
-				} else {
-					dispatch.receiveEntityRecords( kind, name, record, query );
-				}
+				dispatch.receiveEntityRecords( kind, name, record, query );
 			}
 		} finally {
 			dispatch.__unstableReleaseStoreLock( lock );
@@ -241,7 +213,6 @@ export const getEntityRecords =
 			key: parsedKey,
 			isRevision,
 		} = parseEntityName( name );
-
 		const entityConfig = configs.find(
 			( config ) => config.name === parsedName && config.kind === kind
 		);
@@ -277,21 +248,16 @@ export const getEntityRecords =
 				};
 			}
 
-			let path;
-			if ( isRevision ) {
-				path = addQueryArgs(
-					entityConfig.getRevisionsUrl( parsedKey ),
-					{
-						...entityConfig.revisionURLParams,
-						...query,
-					}
-				);
-			} else {
-				path = addQueryArgs( entityConfig.baseURL, {
-					...entityConfig.baseURLParams,
-					...query,
-				} );
-			}
+			const baseUrl = isRevision
+				? entityConfig.getRevisionsUrl( parsedKey )
+				: entityConfig.baseURL;
+
+			const path = addQueryArgs( baseUrl, {
+				...( isRevision
+					? entityConfig.revisionURLParams
+					: entityConfig.baseURLParams ),
+				...query,
+			} );
 
 			let records = Object.values( await apiFetch( { path } ) );
 
@@ -310,23 +276,12 @@ export const getEntityRecords =
 				} );
 			}
 
-			// @TODO just dispatching here to send the action type.
-			if ( isRevision ) {
-				dispatch( {
-					type: 'RECEIVE_ITEM_REVISIONS',
-					kind,
-					name,
-					items: records,
-					query,
-				} );
-			} else {
-				dispatch.receiveEntityRecords( kind, name, records, query );
-			}
+			dispatch.receiveEntityRecords( kind, name, records, query );
 
 			// When requesting all fields, the list of results can be used to
 			// resolve the `getEntityRecord` selector in addition to `getEntityRecords`.
 			// See https://github.com/WordPress/gutenberg/pull/26575
-			if ( ! query?._fields && ! query.context ) {
+			if ( ! isRevision && ! query?._fields && ! query.context ) {
 				const key = entityConfig.key || DEFAULT_ENTITY_KEY;
 				const resolutionsArgs = records
 					.filter( ( record ) => record[ key ] )
@@ -350,6 +305,7 @@ export const getEntityRecords =
 
 getEntityRecords.shouldInvalidate = ( action, kind, name ) => {
 	// Invalidate cache when a new revision is created.
+	// @TODO This is not right, we should invalidate the cache via action.invalidateCache before the next call.
 	if ( action.type === 'SAVE_ENTITY_RECORD_FINISH' ) {
 		const [ postType, recordId ] = name.split( ':' );
 		return (

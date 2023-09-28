@@ -12,6 +12,7 @@ import {
 	ifMatchingAction,
 	replaceAction,
 	onSubKey,
+	parseEntityName,
 } from '../utils';
 import { DEFAULT_ENTITY_KEY } from '../entities';
 import getQueryParts from './get-query-parts';
@@ -406,10 +407,10 @@ const revisionsReducer = combineReducers( {
 export const revisionsQueriedDataReducer = ( state = {}, action ) => {
 	switch ( action.type ) {
 		case 'RECEIVE_ITEM_REVISIONS':
-			const parent = action.name.split( ':' )[ 1 ];
+			const { key: parentId } = parseEntityName( action.name );
 			return {
 				...state,
-				[ parent ]: revisionsReducer( state[ parent ], action ),
+				[ parentId ]: revisionsReducer( state[ parentId ], action ),
 			};
 		default:
 			return state;

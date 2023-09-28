@@ -14,7 +14,7 @@ import deprecated from '@wordpress/deprecated';
 /**
  * Internal dependencies
  */
-import { getNestedValue, setNestedValue } from './utils';
+import { getNestedValue, setNestedValue, parseEntityName } from './utils';
 import { receiveItems, removeItems, receiveQueriedItems } from './queried-data';
 import { getOrLoadEntitiesConfig, DEFAULT_ENTITY_KEY } from './entities';
 import { createBatch } from './batch';
@@ -90,9 +90,11 @@ export function receiveEntityRecords(
 	invalidateCache = false,
 	edits
 ) {
+	const { isRevision } = parseEntityName( name );
+
 	// Auto drafts should not have titles, but some plugins rely on them so we can't filter this
 	// on the server.
-	if ( kind === 'postType' ) {
+	if ( ! isRevision && kind === 'postType' ) {
 		records = ( Array.isArray( records ) ? records : [ records ] ).map(
 			( record ) =>
 				record.status === 'auto-draft'
@@ -105,6 +107,10 @@ export function receiveEntityRecords(
 		action = receiveQueriedItems( records, query, edits );
 	} else {
 		action = receiveItems( records, edits );
+	}
+
+	if ( isRevision ) {
+		action.type = 'RECEIVE_ITEM_REVISIONS';
 	}
 
 	return {
