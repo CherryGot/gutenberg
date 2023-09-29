@@ -189,7 +189,7 @@ export const withBlockRenameControl = createHigherOrderComponent(
 
 		const supportsBlockNaming = hasBlockSupport(
 			name,
-			'__experimentalBlockRenaming',
+			'blockRenaming',
 			true
 		);
 
