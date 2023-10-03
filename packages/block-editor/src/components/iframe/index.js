@@ -276,6 +276,7 @@ function Iframe( {
 						event.currentTarget.ownerDocument !==
 						event.target.ownerDocument
 					) {
+						event.nativeEvent.stopPropagation = () => {};
 						event.stopPropagation();
 						bubbleEvent(
 							event,

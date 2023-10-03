@@ -887,8 +887,6 @@ export const __unstableSplitSelection =
 		const selectionAnchor = select.getSelectionStart();
 		const selectionFocus = select.getSelectionEnd();
 
-		if ( selectionAnchor.clientId === selectionFocus.clientId ) return;
-
 		// Can't split if the selection is not set.
 		if (
 			! selectionAnchor.attributeKey ||
@@ -970,6 +968,10 @@ export const __unstableSplitSelection =
 			{
 				// Preserve the original client ID.
 				...blockB,
+				clientId:
+					blockA.clientId === blockB.clientId
+						? createBlock( blockB.name ).clientId
+						: blockB.clientId,
 				attributes: {
 					...blockB.attributes,
 					[ selectionB.attributeKey ]: toHTMLString( {
